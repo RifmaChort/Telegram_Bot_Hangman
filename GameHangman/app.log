@@ -1,0 +1,38 @@
+2024-05-13 22:52:47,351 - root - ERROR - Ошибка при работе с PostgreSQL: connection to server at "192.168.56.103", port 5432 failed: FATAL:  no pg_hba.conf entry for host "192.168.56.1", user "postgres", database "mydatabase", SSL encryption
+connection to server at "192.168.56.103", port 5432 failed: FATAL:  no pg_hba.conf entry for host "192.168.56.1", user "postgres", database "mydatabase", no encryption
+
+2024-05-13 22:52:47,355 - apscheduler.scheduler - INFO - Scheduler started
+2024-05-13 22:53:24,230 - telegram.ext.updater - INFO - Received signal 2 (SIGINT), stopping...
+2024-05-13 22:53:24,230 - apscheduler.scheduler - INFO - Scheduler has been shut down
+2024-05-13 22:53:28,689 - root - ERROR - Ошибка при работе с PostgreSQL: connection to server at "192.168.56.103", port 5432 failed: FATAL:  no pg_hba.conf entry for host "192.168.56.1", user "postgres", database "mydatabase", SSL encryption
+connection to server at "192.168.56.103", port 5432 failed: FATAL:  no pg_hba.conf entry for host "192.168.56.1", user "postgres", database "mydatabase", no encryption
+
+2024-05-13 22:53:28,693 - apscheduler.scheduler - INFO - Scheduler started
+2024-05-13 22:53:57,752 - telegram.ext.updater - INFO - Received signal 2 (SIGINT), stopping...
+2024-05-13 22:53:57,752 - apscheduler.scheduler - INFO - Scheduler has been shut down
+2024-05-13 22:56:21,945 - root - ERROR - Ошибка при работе с PostgreSQL: connection to server at "127.0.0.1", port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2024-05-13 22:56:21,948 - apscheduler.scheduler - INFO - Scheduler started
+2024-05-13 23:01:34,413 - telegram.ext.updater - INFO - Received signal 2 (SIGINT), stopping...
+2024-05-13 23:01:34,413 - apscheduler.scheduler - INFO - Scheduler has been shut down
+2024-05-13 23:01:41,465 - root - ERROR - Ошибка при работе с PostgreSQL: connection to server at "127.0.0.1", port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2024-05-13 23:01:41,468 - apscheduler.scheduler - INFO - Scheduler started
+2024-05-13 23:03:19,249 - telegram.ext.updater - INFO - Received signal 2 (SIGINT), stopping...
+2024-05-13 23:03:19,249 - apscheduler.scheduler - INFO - Scheduler has been shut down
+2024-05-13 23:04:19,886 - root - INFO - Команда
+2024-05-13 23:04:19,886 - root - INFO - Команда1
+2024-05-13 23:04:19,911 - root - ERROR - Ошибка при работе с PostgreSQL: connection to server at "192.168.56.103", port 5432 failed: FATAL:  no pg_hba.conf entry for host "192.168.56.1", user "postgres", database "mydatabase", SSL encryption
+connection to server at "192.168.56.103", port 5432 failed: FATAL:  no pg_hba.conf entry for host "192.168.56.1", user "postgres", database "mydatabase", no encryption
+
+2024-05-13 23:04:19,913 - apscheduler.scheduler - INFO - Scheduler started
+2024-05-13 23:05:13,174 - telegram.ext.updater - INFO - Received signal 2 (SIGINT), stopping...
+2024-05-13 23:05:13,174 - apscheduler.scheduler - INFO - Scheduler has been shut down
+2024-05-13 23:06:00,271 - root - ERROR - Ошибка при работе с PostgreSQL: connection to server at "192.168.56.103", port 5432 failed: FATAL:  no pg_hba.conf entry for host "192.168.56.1", user "postgres", database "mydatabase", SSL encryption
+connection to server at "192.168.56.103", port 5432 failed: FATAL:  no pg_hba.conf entry for host "192.168.56.1", user "postgres", database "mydatabase", no encryption
+
+2024-05-13 23:06:00,276 - apscheduler.scheduler - INFO - Scheduler started
+2024-05-13 23:06:20,389 - telegram.ext.updater - INFO - Received signal 2 (SIGINT), stopping...
+2024-05-13 23:06:20,389 - apscheduler.scheduler - INFO - Scheduler has been shut down
