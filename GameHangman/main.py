@@ -33,14 +33,16 @@ current_message_id = {}  # Хранение ID текущего сообщени
 
 
 def start(update: Update, context: CallbackContext) -> None:
+    logger.info("Функция start вызвана")
     chat_id = update.message.chat_id
 
     # Удаляем предыдущее сообщение, если оно существует
     if chat_id in current_message_id:
         try:
             context.bot.delete_message(chat_id=chat_id, message_id=current_message_id[chat_id])
-        except Exception:
-            pass
+            logger.info(f"Сообщение {current_message_id[chat_id]} удалено")
+        except Exception as e:
+            logger.error(f"Ошибка при удалении сообщения {current_message_id[chat_id]}: {e}")
         # Удаляем текущую игровую сессию, если существует
         if chat_id in game_data:
             del game_data[chat_id]
@@ -53,15 +55,15 @@ def start(update: Update, context: CallbackContext) -> None:
     message = update.message.reply_text('Добро пожаловать в игру "Виселица" 🪢!', reply_markup=reply_markup)
 
     current_message_id[chat_id] = message.message_id  # Сохраняем ID сообщения
+    logger.info(f"Новое сообщение {message.message_id} сохранено")
 
 
 def button(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     chat_id = query.message.chat_id
 
-    # Обновляем текущее сообщение
-    current_message_id[chat_id] = query.message.message_id
     query.answer()
+    logger.info(f"Функция button вызвана с callback_data: {query.data}")
 
     if query.data == 'start_game':
         if chat_id in game_data:
@@ -75,13 +77,17 @@ def button(update: Update, context: CallbackContext) -> None:
         game_data[chat_id] = {'difficulty': level, 'guessed_letters': set()}
         choose_theme(query, level)
     elif query.data.startswith('theme_'):
-        start_game(update, context)
+        start_game(update, context, query)
     elif query.data == 'play_again':
         game_data.pop(chat_id, None)  # Безопасное удаление ключа
+        clear_previous_messages(chat_id, context)
+        # Вызов команды /start через создание объекта Update
+        update.message = query.message  # Присваивание сообщения query.message
         start(update, context)
 
 
 def choose_difficulty(query):
+    logger.info("Функция choose_difficulty вызвана")
     keyboard = [
         [InlineKeyboardButton("Легко", callback_data='difficulty_easy')],
         [InlineKeyboardButton("Средне", callback_data='difficulty_medium')],
@@ -92,6 +98,7 @@ def choose_difficulty(query):
 
 
 def choose_theme(query, level):
+    logger.info(f"Функция choose_theme вызвана с уровнем сложности: {level}")
     themes = get_themes_by_difficulty(level)
     keyboard = [[InlineKeyboardButton(theme, callback_data=f'theme_{theme}')] for theme in themes.keys()]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -99,6 +106,7 @@ def choose_theme(query, level):
 
 
 def show_instructions(query):
+    logger.info("Функция show_instructions вызвана")
     keyboard = [
         [InlineKeyboardButton("Начать 🏁", callback_data='start_game')],
         [InlineKeyboardButton("Как играть 📜", callback_data='how_to_play')]
@@ -115,12 +123,15 @@ def show_instructions(query):
     query.edit_message_text(text=instructions, reply_markup=reply_markup)
 
 
-def start_game(update: Update, context: CallbackContext) -> None:
-    query = update.callback_query
+def start_game(update: Update, context: CallbackContext, query) -> None:
+    logger.info("Функция start_game вызвана")
     theme = query.data.split('_')[1]
     chat_id = query.message.chat_id
     level = game_data[chat_id]['difficulty']
     themes = get_themes_by_difficulty(level)
+
+    logger.info("clear_previous_messages вызвана")
+    clear_previous_messages(chat_id, context)  # Удалить все предыдущие сообщения
 
     word_data = random.choice(themes[theme])
     word = word_data['word']
@@ -142,10 +153,11 @@ def start_game(update: Update, context: CallbackContext) -> None:
         'message_id': None  # Сохраняем ID сообщения с игрой
     })
 
-    send_initial_game_state(query, chat_id)
+    send_initial_game_state(query, chat_id, context)
 
 
 def get_themes_by_difficulty(level):
+    logger.info(f"Функция get_themes_by_difficulty вызвана с уровнем сложности: {level}")
     if level == 'easy':
         return easy_themes
     elif level == 'medium':
@@ -154,7 +166,8 @@ def get_themes_by_difficulty(level):
         return hard_themes
 
 
-def send_initial_game_state(query, chat_id):
+def send_initial_game_state(query, chat_id, context):
+    logger.info("Функция send_initial_game_state вызвана")
     game = game_data[chat_id]
     masked_word = ' '.join(game['masked_word'])
     hangman_stage = get_hangman_stage(game['incorrect_guesses'])
@@ -164,16 +177,19 @@ def send_initial_game_state(query, chat_id):
     image_path = Path(f'images/image{game["incorrect_guesses"]}.jpg')
 
     # Создаем новое сообщение
-    message = query.message.reply_photo(
+    message = context.bot.send_photo(
+        chat_id=chat_id,
         photo=open(image_path, 'rb'),
         caption=f"{hangman_stage}\n<b>Слово:</b> {masked_word}\nПодсказка: {game['hint']}\nОсталось попыток: {game['max_attempts'] - game['incorrect_guesses']}",
         reply_markup=reply_markup,
         parse_mode=ParseMode.HTML
     )
     game['message_id'] = message.message_id
+    logger.info(f"Новое сообщение {message.message_id} с состоянием игры отправлено")
 
 
 def show_game_state(query, chat_id):
+    logger.info("Функция show_game_state вызвана")
     game = game_data[chat_id]
     masked_word = ' '.join(game['masked_word'])
     hangman_stage = get_hangman_stage(game['incorrect_guesses'])
@@ -183,37 +199,28 @@ def show_game_state(query, chat_id):
 
     image_path = Path(f'images/image{game["incorrect_guesses"]}.jpg')
 
-    if game['message_id']:
-        # Редактируем существующее сообщение
-        query.message.bot.edit_message_media(
-            chat_id=chat_id,
-            message_id=game['message_id'],
-            media=InputMediaPhoto(open(image_path, 'rb')),
-            reply_markup=reply_markup
-        )
-        query.message.bot.edit_message_caption(
-            chat_id=chat_id,
-            message_id=game['message_id'],
-            caption=f"{hangman_stage}\n<b>Слово:</b> {masked_word}\nПодсказка: {game['hint']}\nОсталось попыток: {game['max_attempts'] - game['incorrect_guesses']}",
-            reply_markup=reply_markup,
-            parse_mode=ParseMode.HTML
-        )
-    else:
-        # Создаем новое сообщение
-        message = query.message.reply_photo(
-            photo=open(image_path, 'rb'),
-            caption=f"{hangman_stage}\n<b>Слово:</b> {masked_word}\nПодсказка: {game['hint']}\nОсталось попыток: {game['max_attempts'] - game['incorrect_guesses']}",
-            reply_markup=reply_markup,
-            parse_mode=ParseMode.HTML
-        )
-        game['message_id'] = message.message_id
+    query.message.bot.edit_message_media(
+        chat_id=chat_id,
+        message_id=game['message_id'],
+        media=InputMediaPhoto(open(image_path, 'rb')),
+        reply_markup=reply_markup
+    )
+    query.message.bot.edit_message_caption(
+        chat_id=chat_id,
+        message_id=game['message_id'],
+        caption=f"{hangman_stage}\n<b>Слово:</b> {masked_word}\nПодсказка: {game['hint']}\nОсталось попыток: {game['max_attempts'] - game['incorrect_guesses']}",
+        reply_markup=reply_markup,
+        parse_mode=ParseMode.HTML
+    )
 
 
 def get_hangman_stage(incorrect_guesses):
+    logger.info("Функция get_hangman_stage вызвана")
     return f"Этап {incorrect_guesses + 1}"
 
 
 def handle_guess(update: Update, context: CallbackContext) -> None:
+    logger.info("Функция handle_guess вызвана")
     query = update.callback_query
     chat_id = query.message.chat_id
     game = game_data[chat_id]
@@ -242,12 +249,17 @@ def handle_guess(update: Update, context: CallbackContext) -> None:
             parse_mode=ParseMode.HTML
         )
         # Добавляем новое сообщение с кнопкой "Начать снова"
-        query.message.reply_text(
+        context.bot.send_message(
+            chat_id=chat_id,
             text="Игра окончена! Хотите сыграть снова?",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Начать снова 🔄", callback_data='start_game')]])
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Начать снова 🔄", callback_data='play_again')]])
         )
         game_data.pop(chat_id, None)  # Безопасное удаление ключа
     elif game['incorrect_guesses'] >= game['max_attempts']:
+        # Показать последнее изображение виселицы
+        show_game_state(query, chat_id)
+        time.sleep(0.5)  # Дать время на отображение последнего изображения
+
         query.message.bot.edit_message_caption(
             chat_id=chat_id,
             message_id=game['message_id'],
@@ -255,9 +267,10 @@ def handle_guess(update: Update, context: CallbackContext) -> None:
             parse_mode=ParseMode.HTML
         )
         # Добавляем новое сообщение с кнопкой "Начать снова"
-        query.message.reply_text(
+        context.bot.send_message(
+            chat_id=chat_id,
             text="Игра окончена! Хотите сыграть снова?",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Начать снова 🔄", callback_data='start_game')]])
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Начать снова 🔄", callback_data='play_again')]])
         )
         game_data.pop(chat_id, None)  # Безопасное удаление ключа
     else:
@@ -266,6 +279,7 @@ def handle_guess(update: Update, context: CallbackContext) -> None:
 
 
 def use_hint(update: Update, context: CallbackContext) -> None:
+    logger.info("Функция use_hint вызвана")
     query = update.callback_query
     chat_id = query.message.chat_id
     game = game_data[chat_id]
@@ -292,9 +306,10 @@ def use_hint(update: Update, context: CallbackContext) -> None:
             parse_mode=ParseMode.HTML
         )
         # Добавляем новое сообщение с кнопкой "Начать снова"
-        query.message.reply_text(
+        context.bot.send_message(
+            chat_id=chat_id,
             text="Игра окончена! Хотите сыграть снова?",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Начать снова 🔄", callback_data='start_game')]])
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Начать снова 🔄", callback_data='play_again')]])
         )
         game_data.pop(chat_id, None)  # Безопасное удаление ключа
     else:
@@ -303,6 +318,7 @@ def use_hint(update: Update, context: CallbackContext) -> None:
 
 
 def generate_keyboard(game):
+    logger.info("Функция generate_keyboard вызвана")
     keyboard = []
     alphabet = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя'
     row_length = 8
@@ -318,14 +334,22 @@ def generate_keyboard(game):
     return keyboard
 
 
-def clear_chat(context: CallbackContext) -> None:
-    for chat_id in current_message_id.keys():
-        message_id = current_message_id[chat_id]
-        for message_id in range(message_id, message_id - 40, -1):  # Попытка удалить последние 40 сообщений
+def clear_previous_messages(chat_id, context):
+    logger.info(f"Вызвана функция clear_previous_messages для чата {chat_id}")
+    if chat_id in current_message_id:
+        for message_id in range(current_message_id[chat_id], current_message_id[chat_id] - 10, -1):  # Попытка удалить последние 10 сообщений
             try:
                 context.bot.delete_message(chat_id=chat_id, message_id=message_id)
-            except Exception:
+                logger.info(f"Сообщение {message_id} удалено")
+            except Exception as e:
+                logger.error(f"Не удалось удалить сообщение {message_id}: {e}")
                 continue
+
+
+def clear_chat(context: CallbackContext) -> None:
+    logger.info("Вызвана функция clear_chat")
+    for chat_id in current_message_id.keys():
+        clear_previous_messages(chat_id, context)
 
 
 def cleanup(updater):
@@ -334,6 +358,7 @@ def cleanup(updater):
 
 
 def main() -> None:
+    logger.info("Запуск бота")
     updater = Updater("7125253698:AAGN1SW98a34ZYdzVap8vtOB4QXZAee5Y9E")
 
     # Установка команды для отображения в меню
@@ -343,7 +368,7 @@ def main() -> None:
     ])
 
     updater.dispatcher.add_handler(CommandHandler("start", start))
-    updater.dispatcher.add_handler(CommandHandler("clear", lambda update, context: clear_chat(context)))
+    #updater.dispatcher.add_handler(CommandHandler("clear", lambda update, context: clear_chat(context)))
     updater.dispatcher.add_handler(CallbackQueryHandler(button, pattern='^start_game$'))
     updater.dispatcher.add_handler(CallbackQueryHandler(button, pattern='^how_to_play$'))
     updater.dispatcher.add_handler(CallbackQueryHandler(button, pattern='^difficulty_'))
