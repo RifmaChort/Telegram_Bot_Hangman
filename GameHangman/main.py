@@ -48,11 +48,11 @@ def start(update: Update, context: CallbackContext) -> None:
             del game_data[chat_id]
 
     keyboard = [
-        [InlineKeyboardButton("Начать 🏁", callback_data='start_game')],
+        [InlineKeyboardButton("Начать", callback_data='start_game')],
         [InlineKeyboardButton("Как играть 📜", callback_data='how_to_play')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    message = update.message.reply_text('Добро пожаловать в игру "Виселица" 🪢!', reply_markup=reply_markup)
+    message = update.message.reply_text('Добро пожаловать в игру "Виселица"!', reply_markup=reply_markup)
 
     current_message_id[chat_id] = message.message_id  # Сохраняем ID сообщения
     logger.info(f"Новое сообщение {message.message_id} сохранено")
@@ -108,17 +108,18 @@ def choose_theme(query, level):
 def show_instructions(query):
     logger.info("Функция show_instructions вызвана")
     keyboard = [
-        [InlineKeyboardButton("Начать 🏁", callback_data='start_game')],
+        [InlineKeyboardButton("Начать", callback_data='start_game')],
         [InlineKeyboardButton("Как играть 📜", callback_data='how_to_play')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     instructions = (
-        "Инструкции по игре 'Виселица' 🪢:\n"
-        "1. Выберите тему 📂.\n"
-        "2. Пытайтесь угадать слово, нажимая на буквы 🔤.\n"
-        "3. Вы можете использовать подсказку для открытия буквы 💡.\n"
-        "4. Если вы угадаете слово, вы победите 🎉!\n"
-        "5. Если сделаете слишком много неверных попыток, вы проиграете 😔."
+        "Инструкции по игре 'Виселица':\n"
+        "1. Выберите уровень сложности.\n"
+        "2. Выберите тему.\n"
+        "3. Пытайтесь угадать слово, нажимая на буквы.\n"
+        "4. Вы можете использовать подсказку для открытия буквы 💡.\n"
+        "5. Если вы угадаете слово, вы победите 🎉!\n"
+        "6. Если сделаете слишком много неверных попыток, вы проиграете 😔."
     )
     query.edit_message_text(text=instructions, reply_markup=reply_markup)
 
@@ -329,7 +330,7 @@ def generate_keyboard(game):
         keyboard.append(row)
 
     if game['incorrect_guesses'] < game['max_attempts'] and game['hint_used'] < game['max_hints']:
-        keyboard.append([InlineKeyboardButton("Подсказка 💡", callback_data='use_hint')])
+        keyboard.append([InlineKeyboardButton("Открыть букву", callback_data='use_hint')])
 
     return keyboard
 
@@ -363,12 +364,10 @@ def main() -> None:
 
     # Установка команды для отображения в меню
     updater.bot.set_my_commands([
-        BotCommand("start", "Запустить бота"),
-        BotCommand("clear", "Очистить чат")
+        BotCommand("start", "Запустить бота")
     ])
 
     updater.dispatcher.add_handler(CommandHandler("start", start))
-    #updater.dispatcher.add_handler(CommandHandler("clear", lambda update, context: clear_chat(context)))
     updater.dispatcher.add_handler(CallbackQueryHandler(button, pattern='^start_game$'))
     updater.dispatcher.add_handler(CallbackQueryHandler(button, pattern='^how_to_play$'))
     updater.dispatcher.add_handler(CallbackQueryHandler(button, pattern='^difficulty_'))
